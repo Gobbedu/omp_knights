@@ -78,13 +78,13 @@ int proximo_movimento_x(int x, int movimento){
         return x - 2;
 }
 
-int passeio_cavalo(int tabuleiro[N][M], int x, int y, int jogada){
+int _passeio_cavalo(int tabuleiro[N][M], int x, int y, int jogada){
     int x2, y2, i, res = 0;
     if (jogada == N*M)
         return 1;
 
-    int evalx[9], evaly[9], evi = 0;
-    #pragma omp parallel for private(x2, y2) shared(evalx, evaly, evi)
+    int evalx[9], evaly[9], valido = 0;
+    #pragma omp parallel for private(x2, y2) shared(evalx, evaly, valido)
     for (i=1;i<9;i++){
         x2 = proximo_movimento_x(x,i);
         y2 = proximo_movimento_y(y,i);
@@ -92,26 +92,43 @@ int passeio_cavalo(int tabuleiro[N][M], int x, int y, int jogada){
             #pragma omp critical 
             {
                 // printf("%d, %d\n", x2, y2);
-                evalx[evi] = x2;
-                evaly[evi] = y2;
-                evi++;
+                evalx[valido] = x2;
+                evaly[valido] = y2;
+                valido++;
             }
         }
     }
+    #pragma barrier
 
-    for(i = 0; i<evi; i++){
-        x2 = evalx[i];
-        y2 = evaly[i];
-        tabuleiro[x2][y2] = jogada+1;
-        // printf("%d, %d\n", x2, y2);
-        if (passeio_cavalo(tabuleiro, x2,y2, jogada+1))
+    for(i = 0; i<valido; i++){
+        tabuleiro[evalx[i]][evaly[i]] = jogada+1;
+        // printf("%d, %d\n", evalx[i], evaly[i]);
+        if (passeio_cavalo(tabuleiro, evalx[i],evaly[i], jogada+1))
             return 1;
-        tabuleiro[x2][y2] = 0;
+        tabuleiro[evalx[i]][evaly[i]] = 0;
     }
 
     return 0;
 }
 
+int passeio_cavalo(int tabuleiro[N][M], int x, int y, int jogada){
+    int x2, y2, i;
+    if (jogada == N*M)
+        return 1;
+
+    for (i=1;i<9;i++){
+        x2 = proximo_movimento_x(x,i);
+        y2 = proximo_movimento_y(y,i);
+        if (jogada_valida(x2,y2, tabuleiro)){
+            tabuleiro[x2][y2] = jogada+1;
+            if (passeio_cavalo(tabuleiro, x2,y2, jogada+1))
+                return 1;
+            tabuleiro[x2][y2] = 0;
+        }
+    }
+
+    return 0;
+}
 
 int main(){
     int i, j;
@@ -130,7 +147,7 @@ int main(){
 
     tabuleiro[x_inicio][y_inicio] = 1;
 
-    omp_set_num_threads(NUM_THREADS); 
+    // omp_set_num_threads(NUM_THREADS); 
     // printf("NUM THREADS: %d\n", NUM_THREADS);
 
     if (passeio_cavalo(tabuleiro, x_inicio, y_inicio, 1))

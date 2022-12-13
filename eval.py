@@ -7,7 +7,7 @@ def main():
     with open('serial.log', 'r') as s:
         seria = literal_eval(s.readline())
 
-    print(f'lens: {len(paral)} & {len(seria)}')
+    # print(f'lens: {len(paral)} & {len(seria)}')
 
 
     Speed = list()

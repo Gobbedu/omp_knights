@@ -13,14 +13,24 @@ runs: serial
 
 runp: paralelo
 # STACKSIZE limita numero de threads em um dado momento
-# export OMP_NUM_THREADS=6
-	export OMP_STACKSIZE=6 
-	export OMP_NESTED=true
-	export OMP_CANCELLATION=true
+	export OMP_NUM_THREADS=6
+# export OMP_STACKSIZE=6 
+# export OMP_NESTED=true
+# export OMP_CANCELLATION=true
 	@echo "\nparalelo:"
 	@./paralelo
 
 run: runs runp
+
+batch: 
+	@echo "running batches for each implementation..."
+	@$(bash run.sh)
+	@echo Done
+
+speedup: 
+	@python3.9 eval.py
+
+eval: batch speedup
 
 
 clean:

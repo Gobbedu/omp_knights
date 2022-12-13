@@ -79,19 +79,34 @@ int proximo_movimento_x(int x, int movimento){
 }
 
 int passeio_cavalo(int tabuleiro[N][M], int x, int y, int jogada){
-    int x2, y2, i;
+    int x2, y2, i, res = 0;
     if (jogada == N*M)
         return 1;
 
+    int evalx[9], evaly[9], evi = 0;
+    #pragma omp parallel for private(x2, y2) shared(evalx, evaly, evi)
     for (i=1;i<9;i++){
         x2 = proximo_movimento_x(x,i);
         y2 = proximo_movimento_y(y,i);
         if (jogada_valida(x2,y2, tabuleiro)){
-            tabuleiro[x2][y2] = jogada+1;
-            if (passeio_cavalo(tabuleiro, x2,y2, jogada+1))
-                return 1;
-            tabuleiro[x2][y2] = 0;
+            #pragma omp critical 
+            {
+                // printf("%d, %d\n", x2, y2);
+                evalx[evi] = x2;
+                evaly[evi] = y2;
+                evi++;
+            }
         }
+    }
+
+    for(i = 0; i<evi; i++){
+        x2 = evalx[i];
+        y2 = evaly[i];
+        tabuleiro[x2][y2] = jogada+1;
+        // printf("%d, %d\n", x2, y2);
+        if (passeio_cavalo(tabuleiro, x2,y2, jogada+1))
+            return 1;
+        tabuleiro[x2][y2] = 0;
     }
 
     return 0;
@@ -125,4 +140,5 @@ int main(){
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
     printf("%f seconds\n",cpu_time_used);
+    fprintf(stderr, "%f", cpu_time_used);
 }

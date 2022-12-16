@@ -1,37 +1,38 @@
-all: serial paralelo
+CC = gcc -O1
 
-serial: passeio_cavalo.c
-	gcc -O3 -o serial passeio_cavalo.c
+all: cavalo_paralelo passeio_cavalo
 
-paralelo: cavalo_paralelo.c
-	gcc -O3 -o paralelo cavalo_paralelo.c -fopenmp
+cavalo_paralelo: cavalo_paralelo.c
+	$(CC) -o cavalo_paralelo -fopenmp cavalo_paralelo.c 
 
+passeio_cavalo: passeio_cavalo.c
+	$(CC) -o passeio_cavalo passeio_cavalo.c 
 
-runs: serial
-	@echo "\nserial:"
-	@./serial
-
-runp: paralelo
-# STACKSIZE limita numero de threads em um dado momento
-	export OMP_NUM_THREADS=6
-# export OMP_STACKSIZE=6 
-# export OMP_NESTED=true
-# export OMP_CANCELLATION=true
+run: passeio_cavalo cavalo_paralelo
 	@echo "\nparalelo:"
-	@./paralelo
+	@export OMP_CANCELLATION=true
+	@./cavalo_paralelo 2> /dev/null
 
-run: runs runp
+	@echo "\nserial:"
+	@./passeio_cavalo 2> /dev/null
 
-batch: 
-	@echo "running batches for each implementation..."
-	@$(bash run.sh)
-	@echo Done
 
-speedup: 
-	@python3.9 eval.py
+runs: passeio_cavalo
+	@./passeio_cavalo
 
-eval: batch speedup
+runp: cavalo_paralelo
+	@export OMP_CANCELLATION=true
+	@./cavalo_paralelo
 
+batch: run.sh
+	@./run.sh
+
+speed: eval.py
+	@python3 eval.py
+
+eval: all 
+	@$(MAKE) batch --no-print-directory
+	@$(MAKE) speed --no-print-directory
 
 clean:
-	@rm -rf paralelo serial
+	@rm -rf passeio_cavalo cavalo_paralelo 

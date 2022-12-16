@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <time.h>
 #include <omp.h>
+#include <string.h>
+#include <stdlib.h>
 
 
-#define NUM_THREADS 6
+// # threads eh limitado a ser <= N*M (tam tabuleiro)
+#define NUM_THREADS 8
 #define N 6
 #define M 6
 
@@ -14,6 +17,20 @@ void print_tabuleiro(int tabuleiro[N][M]){
             printf("%3d ",tabuleiro[i][j]);
         printf("\n");
     }
+}
+
+void zera_tabuleiro(int tabuleiro[N][M]){
+    for(int i=0;i<N;i++)
+        for(int j=0;j<M;j++)
+            tabuleiro[i][j] = 0;
+}
+
+int tabuleiro_valido(int tabuleiro[N][M]){
+    for(int i = 0; i < N; i++)
+    for(int j = 0; j < M; j++)
+        if(tabuleiro[i][j] == 0)
+            return 0;
+    return 1;
 }
 
 int jogada_valida(int x, int y, int tabuleiro[N][M]){
@@ -78,6 +95,7 @@ int proximo_movimento_x(int x, int movimento){
         return x - 2;
 }
 
+// Percorre a arvore de dfs 'escolhendo' um nodo filho aleatorio 
 int _passeio_cavalo(int tabuleiro[N][M], int x, int y, int jogada){
     int x2, y2, i, res = 0;
     if (jogada == N*M)
@@ -103,7 +121,7 @@ int _passeio_cavalo(int tabuleiro[N][M], int x, int y, int jogada){
     for(i = 0; i<valido; i++){
         tabuleiro[evalx[i]][evaly[i]] = jogada+1;
         // printf("%d, %d\n", evalx[i], evaly[i]);
-        if (passeio_cavalo(tabuleiro, evalx[i],evaly[i], jogada+1))
+        if (_passeio_cavalo(tabuleiro, evalx[i],evaly[i], jogada+1))
             return 1;
         tabuleiro[evalx[i]][evaly[i]] = 0;
     }
@@ -111,6 +129,7 @@ int _passeio_cavalo(int tabuleiro[N][M], int x, int y, int jogada){
     return 0;
 }
 
+// Percorre a arvore de dfs escolhendo sempre o 1° filho do nodo
 int passeio_cavalo(int tabuleiro[N][M], int x, int y, int jogada){
     int x2, y2, i;
     if (jogada == N*M)
@@ -130,9 +149,51 @@ int passeio_cavalo(int tabuleiro[N][M], int x, int y, int jogada){
     return 0;
 }
 
+// Começa uma busca dfs para cada posicao no tabuleiro
+int threaded_walk(clock_t start)
+{
+        double cpu_time_used;
+        clock_t end;
+        
+    // limita # threads, sendo menor que o tabuleiro
+    int T = NUM_THREADS;
+    T = (T > N*M) ? N*M : T; 
+    omp_set_num_threads(T);
+
+    printf("using %d threads\n", T);
+
+    #pragma omp set_dynamic(0) 
+    #pragma omp schedule(static, 1)
+    #pragma omp parallel for
+    for(int i = 0; i < T; i++){
+        int x2 = i % N;
+        int y2 = i / N;
+
+        // absolutamente privado >:(
+        int tabuleiro[N][M];
+        zera_tabuleiro(tabuleiro);
+
+        if(jogada_valida(x2, y2, tabuleiro)){
+            tabuleiro[x2][y2] = 1;
+
+            if (passeio_cavalo(tabuleiro, x2, y2, 1)){
+                print_tabuleiro(tabuleiro);
+
+                end = clock();
+                cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+                printf("%f seconds\n",cpu_time_used);
+                fprintf(stderr, "%f", cpu_time_used);
+                exit(0);     // nao precisa lidar com cancelar omp threads           
+            }
+            tabuleiro[x2][y2] = 0;
+        }
+    }
+    
+    return 0;
+}
+
 int main(){
     int i, j;
-    int tabuleiro[N][M];
     int x_inicio = 0, y_inicio = 0;
     clock_t start, end;
     double cpu_time_used;
@@ -140,22 +201,12 @@ int main(){
     
     printf("Resolvendo para N=%d e M=%d\n",N,M);
 
-// NAO VALE A PENA SERIALIZAR: OVERHEAD > GANHO
-    for (i=0; i < N; i++)
-        for (j=0; j < M; j++)
-            tabuleiro[i][j] = 0;
-
-    tabuleiro[x_inicio][y_inicio] = 1;
-
-    // omp_set_num_threads(NUM_THREADS); 
-    // printf("NUM THREADS: %d\n", NUM_THREADS);
-
-    if (passeio_cavalo(tabuleiro, x_inicio, y_inicio, 1))
-        print_tabuleiro(tabuleiro);
-    else
+    if(!threaded_walk(start))
         printf("Nao existe solucao\n");
+
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
     printf("%f seconds\n",cpu_time_used);
     fprintf(stderr, "%f", cpu_time_used);
+    exit(0);
 }

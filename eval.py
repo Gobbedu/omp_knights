@@ -1,10 +1,10 @@
 from ast import literal_eval
 
 def main():
-    with open('parallel.log', 'r') as p:
+    with open('p.log', 'r') as p:
         paral = literal_eval(p.readline())
 
-    with open('serial.log', 'r') as s:
+    with open('s.log', 'r') as s:
         seria = literal_eval(s.readline())
 
     # print(f'lens: {len(paral)} & {len(seria)}')

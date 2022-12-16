@@ -1,18 +1,21 @@
 #!/bin/bash
 
-make all
+make
 
-echo -n "[" > parallel.log
-echo -n "[" > serial.log
+PARALLEL="p.log"
+SERIAL="s.log"
+
+echo -n "[" > $PARALLEL
+echo -n "[" > $SERIAL
 
 # salva no file tempo de N exec do parallel & serial
-for i in {1..20}; do 
-    make runp 2>> parallel.log > /dev/null; 
-    echo -n ", " >> parallel.log; 
+for i in {1..100}; do 
+    make runp 2>> $PARALLEL > /dev/null; 
+    echo -n ", " >> $PARALLEL; 
 
-    make runs 2>> serial.log > /dev/null; 
-    echo -n ", " >> serial.log;  
+    make runs 2>> $SERIAL > /dev/null; 
+    echo -n ", " >> $SERIAL;  
 done
 
-echo -n "]" >> parallel.log
-echo -n "]" >> serial.log
+echo -n "]" >> $PARALLEL
+echo -n "]" >> $SERIAL

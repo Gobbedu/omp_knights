@@ -109,9 +109,6 @@ int main(){
 
     tabuleiro[x_inicio][y_inicio] = 1;
 
-    #pragma omp parallel for firstprivate(tabuleiro)
-    for(int i=0)
-
     if (passeio_cavalo(tabuleiro, x_inicio, y_inicio, 1))
         print_tabuleiro(tabuleiro);
     else

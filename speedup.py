@@ -1,46 +1,54 @@
-import subprocess
 import sys
+import subprocess
+import statistics
 
-# Path to executables
-path_to_a = sys.argv[1]
-path_to_b = sys.argv[2]
+path_to_parallel = sys.argv[1]
+path_to_serial = sys.argv[2]
 
-# List of CPU counts to test
-cpu_counts = [1, 2, 3, 4, 5, 6, 7, 8]
+def run_func(func_name, num_threads):
+  # Run the function and get the output with maximum priority
+  result = subprocess.run(["nice", "-n", "-20", func_name, str(num_threads)], stderr=subprocess.PIPE, encoding='utf-8')
+  # Extract the time from the output
+  time = float(result.stderr.strip())
+  return time
 
-# Initialize table
-table = [['N runs'] + [str(x) + ' CPU' for x in cpu_counts]]
+def benchmark(num_threads):
+  # Run function A with the given number of threads
+  time_a = run_func(path_to_parallel, num_threads)
+  # Run function B with a single thread
+  time_b = run_func(path_to_serial, 1)
+  # Calculate the speedup
+  speedup = time_b / time_a
+  return speedup
 
-# Iterate over n_runs values
-for n_runs in sys.argv[3:]:
-    n_runs = int(n_runs)
-    row = [str(n_runs)]
-    for cpu_count in cpu_counts:
-        # Initialize total time for A and B
-        total_time_a = 0
-        total_time_b = 0
-        
-        # Run codes and sum up times
-        for i in range(n_runs):
-            # Run parallel code
-            output_a = subprocess.run([path_to_a, str(cpu_count)], stderr=subprocess.PIPE, universal_newlines=True)
-            time_a = float(output_a.stderr.strip())
-            total_time_a += time_a
-            
-            # Run serial code
-            output_b = subprocess.run([path_to_b], stderr=subprocess.PIPE, universal_newlines=True)
-            time_b = float(output_b.stderr.strip())
-            total_time_b += time_b
-        
-        # Calculate average time for A and B
-        avg_time_a = total_time_a / n_runs
-        avg_time_b = total_time_b / n_runs
-        
-        # Calculate average speedup
-        avg_speedup = avg_time_b / avg_time_a
-        row.append(str(avg_speedup))
-    table.append(row)
+# List of the number of threads to test
+thread_counts = [1, 2, 4, 6, 8, 10]
 
-# Print table
-for row in table:
-    print(' | '.join(row))
+# List of the number of runs to average over
+num_runs = [20, 50, 100, 1000, 2000, 3000]
+
+# Save output
+with open('results.txt', 'w') as f:
+	# Print the table header
+	print("Num Runs\t" + "\t".join(f'{str(c)+" CPU":12}' for c in thread_counts),file=f)
+
+	# Print the results in a table
+	for n in num_runs:
+		# List to store the speedup values for each number of threads
+		speedups = []
+		stddevs = []
+		# Run the benchmark for each number of threads
+		for num_threads in thread_counts:
+			# List to store the speedup values for each run
+			run_speedups = []
+			# Run the benchmark multiple times
+			for i in range(n):
+				speedup = benchmark(num_threads)
+				run_speedups.append(speedup)
+			# Calculate the average and standard deviation of the speedups
+			avg_speedup = statistics.mean(run_speedups)
+			std_dev = statistics.stdev(run_speedups)
+			speedups.append(avg_speedup)
+			stddevs.append(std_dev)
+		# Print the results for this number of runs
+		print(f"{n:<8}\t" + "\t".join(f"{f'{s:.2f} ({d:.2f})':12}" for s, d in zip(speedups, stddevs)),file=f)

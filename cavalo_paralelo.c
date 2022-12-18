@@ -8,7 +8,7 @@
 // # threads eh limitado a ser <= N*M (tam tabuleiro)
 // soh usa se nao for especificado na execucao (./cavalo_paralelo NTHREADS)
 #define NUM_THREADS 8
-#define N 6
+#define N 7
 #define M 6
 
 void print_tabuleiro(int tabuleiro[N][M]){
@@ -160,7 +160,7 @@ int threaded_walk(clock_t start, int nthreads)
     nthreads = (nthreads > N*M) ? N*M : nthreads; 
     omp_set_num_threads(nthreads);
 
-    printf("using %d threads\n", nthreads);
+    // printf("using %d threads\n", nthreads);
 
     #pragma omp set_dynamic(0) 
     #pragma omp schedule(static, 1)
@@ -177,11 +177,11 @@ int threaded_walk(clock_t start, int nthreads)
             tabuleiro[x2][y2] = 1;
 
             if (passeio_cavalo(tabuleiro, x2, y2, 1)){
-                print_tabuleiro(tabuleiro);
+                // print_tabuleiro(tabuleiro);
 
                 end = clock();
                 cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-                printf("%f seconds PARALELO\n",cpu_time_used);
+                // printf("%f seconds PARALELO\n",cpu_time_used);
                 fprintf(stderr, "%f", cpu_time_used);
                 exit(0);     // nao precisa lidar com cancelar omp threads           
             }
@@ -201,16 +201,14 @@ int main(int argc, char **argv){
     start = clock();
     
     nthreads = (argc > 1) ? atoi(argv[1]) : NUM_THREADS;
-    printf("input: %d\n", nthreads);
-
-    printf("Resolvendo para N=%d e M=%d\n",N,M);
+    // printf("Resolvendo para N=%d e M=%d\n",N,M);
 
     if(!threaded_walk(start, nthreads))
         printf("PARALELO nao existe solucao\n");
 
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-    printf("%f seconds\n",cpu_time_used);
+    // printf("%f seconds\n",cpu_time_used);
     fprintf(stderr, "%f", cpu_time_used);
     exit(0);
 }

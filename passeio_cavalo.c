@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <time.h>
 
-#define N 6
+#define N 7
 #define M 6
 
 void print_tabuleiro(int tabuleiro[N][M]){
@@ -101,7 +101,7 @@ int main(){
     double cpu_time_used;
     start = clock();
     
-    printf("Resolvendo para N=%d e M=%d\n",N,M);
+    // printf("Resolvendo para N=%d e M=%d\n",N,M);
 
     for (i=0; i < N; i++)
         for (j=0; j < M; j++)
@@ -110,11 +110,12 @@ int main(){
     tabuleiro[x_inicio][y_inicio] = 1;
 
     if (passeio_cavalo(tabuleiro, x_inicio, y_inicio, 1))
-        print_tabuleiro(tabuleiro);
+        i = 0;
+        // print_tabuleiro(tabuleiro);
     else
         printf("SERIAL Nao existe solucao\n");
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-    printf("%f seconds SERIAL\n",cpu_time_used);
+    // printf("%f seconds SERIAL\n",cpu_time_used);
     fprintf(stderr, "%f", cpu_time_used);
 }

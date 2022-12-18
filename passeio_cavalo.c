@@ -112,9 +112,9 @@ int main(){
     if (passeio_cavalo(tabuleiro, x_inicio, y_inicio, 1))
         print_tabuleiro(tabuleiro);
     else
-        printf("Nao existe solucao\n");
+        printf("SERIAL Nao existe solucao\n");
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-    printf("%f seconds\n",cpu_time_used);
+    printf("%f seconds SERIAL\n",cpu_time_used);
     fprintf(stderr, "%f", cpu_time_used);
 }

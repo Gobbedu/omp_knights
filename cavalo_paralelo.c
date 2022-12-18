@@ -6,6 +6,7 @@
 
 
 // # threads eh limitado a ser <= N*M (tam tabuleiro)
+// soh usa se nao for especificado na execucao (./cavalo_paralelo NTHREADS)
 #define NUM_THREADS 8
 #define N 6
 #define M 6
@@ -150,22 +151,21 @@ int passeio_cavalo(int tabuleiro[N][M], int x, int y, int jogada){
 }
 
 // Começa uma busca dfs para cada posicao no tabuleiro
-int threaded_walk(clock_t start)
+int threaded_walk(clock_t start, int nthreads)
 {
         double cpu_time_used;
         clock_t end;
         
     // limita # threads, sendo menor que o tabuleiro
-    int T = NUM_THREADS;
-    T = (T > N*M) ? N*M : T; 
-    omp_set_num_threads(T);
+    nthreads = (nthreads > N*M) ? N*M : nthreads; 
+    omp_set_num_threads(nthreads);
 
-    printf("using %d threads\n", T);
+    printf("using %d threads\n", nthreads);
 
     #pragma omp set_dynamic(0) 
     #pragma omp schedule(static, 1)
     #pragma omp parallel for
-    for(int i = 0; i < T; i++){
+    for(int i = 0; i < nthreads; i++){
         int x2 = i % N;
         int y2 = i / N;
 
@@ -181,7 +181,7 @@ int threaded_walk(clock_t start)
 
                 end = clock();
                 cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-                printf("%f seconds\n",cpu_time_used);
+                printf("%f seconds PARALELO\n",cpu_time_used);
                 fprintf(stderr, "%f", cpu_time_used);
                 exit(0);     // nao precisa lidar com cancelar omp threads           
             }
@@ -192,17 +192,21 @@ int threaded_walk(clock_t start)
     return 0;
 }
 
-int main(){
+int main(int argc, char **argv){
     int i, j;
+    int nthreads;
     int x_inicio = 0, y_inicio = 0;
     clock_t start, end;
     double cpu_time_used;
     start = clock();
     
+    nthreads = (argc > 1) ? atoi(argv[1]) : NUM_THREADS;
+    printf("input: %d\n", nthreads);
+
     printf("Resolvendo para N=%d e M=%d\n",N,M);
 
-    if(!threaded_walk(start))
-        printf("Nao existe solucao\n");
+    if(!threaded_walk(start, nthreads))
+        printf("PARALELO nao existe solucao\n");
 
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;

@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <time.h>
 
-#define N 7
-#define M 6
+#define N 6
+#define M 5
 
 void print_tabuleiro(int tabuleiro[N][M]){
     int i, j;
@@ -116,6 +116,6 @@ int main(){
         printf("SERIAL Nao existe solucao\n");
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-    // printf("%f seconds SERIAL\n",cpu_time_used);
+    printf("%f seconds SERIAL\n",cpu_time_used);
     fprintf(stderr, "%f", cpu_time_used);
 }

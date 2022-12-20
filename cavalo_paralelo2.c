@@ -1,3 +1,10 @@
+/*
+ * Feito por 
+ * Eduardo Gobbo Willi Vasconcellos Gonçalves - GRR20203892
+ *
+ * 20/dez/2022
+*/
+
 #include <stdio.h>
 #include <time.h>
 #include <omp.h>
@@ -9,7 +16,7 @@
 // soh usa se nao for especificado na execucao (./cavalo_paralelo NTHREADS)
 #define NUM_THREADS 8
 #define N 6
-#define M 5
+#define M 6
 
 void print_tabuleiro(int tabuleiro[N][M]){
     int i, j;
